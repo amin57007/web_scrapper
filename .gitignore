@@ -14,5 +14,6 @@ artifacts/
 .env
 .cookies.json
 cookies.txt
+.ul-storage.json
 *.zip
 !tests/fixtures/**/*.zip

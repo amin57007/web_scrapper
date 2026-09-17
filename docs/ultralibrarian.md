@@ -64,24 +64,26 @@ ultralibrarian.exporthandler.SetupExportDownload(
 ```
 
 The form `#export-submission-form` posts to `/Export/QueueExport`.
+Google reCAPTCHA v2 is on that form after login: callbacks `captchaValid` /
+`captchaInvalid`, widget `.g-recaptcha`, and `grecaptcha.reset()` after submit.
 
-Flow implemented in `ulscrape.scraper.export`:
+`ulscrape fetch` **defaults to Chrome (Playwright)** so it can:
 
-1. Sign in (`/Account/Login` with `Username` / `Password`, then follow any
-   OIDC `id_token` auto-post form) **or** load cookies from `--cookies`.
-2. Re-fetch the details page (need a fresh CSRF token while authenticated).
-3. `POST /Export/QueueExport` as `application/x-www-form-urlencoded` with
-   `PartUniqueId`, repeated `exports=<id>`, `current_url`, and header
-   `RequestVerificationToken`.
-4. JSON response `{ "success": true, "encoded_token": "..." }`.
-5. Poll `GET /Export/CheckQueue?queueToken=...` every 2 seconds.
-   - `state == 2` ready
-   - `state in {3, 4}` failed
-6. `GET /Export/Download?queueToken=...` → zip bytes.
+1. Open the part URL and click **Download Now**
+2. Sign in with `UL_EMAIL` / `UL_PASSWORD` (IdentityServer + OIDC form_post)
+3. Check KiCad v6+ (`#KiCADv6`) and STEP (`#MfrThreeDModel`)
+4. Tick required consent boxes
+5. Complete reCAPTCHA:
+   - click the "I'm not a robot" checkbox in the recaptcha iframe
+   - if that is not enough, send the sitekey to 2Captcha or CapSolver and
+     inject `g-recaptcha-response`, then call `captchaValid()`
+6. Click `#submit-export` and save the browser download as a zip
 
-If the response is HTML instead of JSON/zip, the site is showing a login
-wall or captcha. Export cookies from a signed-in browser and pass
-`--cookies`.
+`--http` uses the raw endpoints without a browser (no reCAPTCHA widget):
+
+1. `POST /Export/QueueExport` with `PartUniqueId`, `exports=42`, `exports=37`
+2. Poll `GET /Export/CheckQueue?queueToken=...` (`state == 2` ready)
+3. `GET /Export/Download?queueToken=...`
 
 ## Environment
 
@@ -89,13 +91,18 @@ wall or captcha. Export cookies from a signed-in browser and pass
 |---|---|
 | `UL_EMAIL` | Account email |
 | `UL_PASSWORD` | Account password |
-| `UL_COOKIES` | Path to JSON `{name: value}` or Netscape cookies |
+| `UL_STORAGE` | Playwright `storage_state.json` to reuse a session |
+| `TWOCAPTCHA_API_KEY` | 2Captcha key for reCAPTCHA v2 |
+| `CAPSOLVER_API_KEY` | CapSolver key (used if 2Captcha is unset) |
+| `UL_HEADED` | `1` to show the Chrome window |
+| `UL_USE_BROWSER` | `0` to force the HTTP-only path |
+| `UL_COOKIES` | Path to JSON `{name: value}` or Netscape cookies (HTTP path) |
 | `UL_OUTPUT` | Default output directory |
 | `UL_BASE_URL` | Override API host (tests) |
 
 ## Terms
 
 CAD content is provided by Ultra Librarian for use in your own PCB designs
-under their terms of use. This client automates the same download a browser
-performs with **your** account. It does not bypass payment, captcha, or
-access controls.
+under their terms of use. This client automates the same login, reCAPTCHA,
+and download a browser performs with **your** account. It does not bypass
+payment or invent recaptcha tokens.

@@ -27,12 +27,20 @@ def _settings(
     cookies: Path | None,
     email: str | None,
     password: str | None,
+    captcha_key: str | None = None,
+    use_browser: bool | None = None,
+    headed: bool | None = None,
+    storage: Path | None = None,
 ) -> Settings:
     return Settings.from_env(
         output_dir=output,
         cookies_path=cookies,
         email=email,
         password=password,
+        captcha_api_key=captcha_key,
+        use_browser=use_browser,
+        headed=headed,
+        storage_state_path=storage,
     )
 
 
@@ -106,9 +114,38 @@ def fetch_cmd(
         str | None,
         typer.Option("--password", envvar="UL_PASSWORD", help="Ultra Librarian password."),
     ] = None,
+    captcha_key: Annotated[
+        str | None,
+        typer.Option(
+            "--captcha-key",
+            envvar="TWOCAPTCHA_API_KEY",
+            help="2Captcha or CapSolver API key used when the checkbox is not enough.",
+        ),
+    ] = None,
+    browser: Annotated[
+        bool,
+        typer.Option("--browser/--http", help="Drive Chrome (handles reCAPTCHA). Default: Chrome."),
+    ] = True,
+    headed: Annotated[
+        bool,
+        typer.Option("--headed", help="Show the Chrome window (also UL_HEADED=1)."),
+    ] = False,
+    storage: Annotated[
+        Path | None,
+        typer.Option("--storage", help="Playwright storage_state.json to reuse a signed-in session."),
+    ] = None,
 ) -> None:
-    """Log in (if needed), download KiCad + STEP, and install the library."""
-    settings = _settings(output, cookies, email, password)
+    """Log in, complete reCAPTCHA, download KiCad + STEP, and install the library."""
+    settings = _settings(
+        output,
+        cookies,
+        email,
+        password,
+        captcha_key=captcha_key,
+        use_browser=browser,
+        headed=True if headed else None,
+        storage=storage,
+    )
     try:
         result = fetch_part(url, settings, lib_name=lib_name)
     except UlscrapeError as exc:

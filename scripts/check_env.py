@@ -21,7 +21,14 @@ def main() -> int:
         print(f"missing dependency: {exc}", file=sys.stderr)
         print("run: pip install -r requirements.txt && pip install -e .", file=sys.stderr)
         return 1
-    print(f"environment OK  python={sys.version.split()[0]}  ulscrape={__version__}")
+    extra = ""
+    try:
+        import playwright  # noqa: F401
+
+        extra = " playwright=ok"
+    except ImportError:
+        extra = " playwright=missing (needed for ulscrape fetch captcha login)"
+    print(f"environment OK  python={sys.version.split()[0]}  ulscrape={__version__}{extra}")
     return 0
 
 

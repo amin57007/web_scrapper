@@ -14,13 +14,8 @@ Ultra Librarian URL
         ├─ info command stops here
         │
         ▼
-  scraper.session.login            (UL_EMAIL / cookies, only for fetch)
-        │
-        ▼
-  scraper.export.queue_and_download
-        │  POST /Export/QueueExport   exports=42 (KiCad v6+) & 37 (STEP)
-        │  GET  /Export/CheckQueue?queueToken=…
-        │  GET  /Export/Download?queueToken=…
+  scraper.browser.download_with_browser   (Chrome: login, reCAPTCHA, download)
+        │  or scraper.export.queue_and_download when --http
         ▼
   kicad.archive.extract_zip        (KiCAD / KiCADv6 / STEP layouts)
         │
@@ -49,7 +44,7 @@ Ultra Librarian URL
 
 - **No KiCad install required to run tests.** Fixtures are synthetic Ultra Librarian zips.
 - **Login is optional for metadata.** `info` only hits the public details page.
-- **CAD download uses the user's account.** Credentials stay in env vars / a cookie file; they are never logged.
+- **CAD download uses the user's account.** Credentials stay in env vars / a cookie file; they are never logged. reCAPTCHA is completed in Chrome (checkbox click, or 2Captcha/CapSolver if you provide a key).
 - **Zip members are never extracted with `..` or absolute paths.**
 - **Vendor zip layouts are identified, not assumed.** See [kicad-libraries.md](kicad-libraries.md).
 

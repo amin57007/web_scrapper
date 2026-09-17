@@ -9,11 +9,13 @@ ulscrape info "https://app.ultralibrarian.com/details/<uuid>/<mfr>/<mpn>"
 Prints manufacturer, MPN, description, datasheet URL, and the CAD format
 table (KiCad v5/v6, STEP, …). Use this to confirm the part before download.
 
-## Fetch (account required)
+## Fetch (account + reCAPTCHA)
 
 ```bash
 export UL_EMAIL="you@example.com"
 export UL_PASSWORD="..."
+# optional if the checkbox challenge needs a solver:
+# export TWOCAPTCHA_API_KEY="..."
 ulscrape fetch "<url>" -o ./libraries --lib-name UltraLibrarian
 ```
 
@@ -21,8 +23,12 @@ Flags:
 
 - `-o / --output` library root (default `libraries/`)
 - `--lib-name` KiCad nickname
-- `--cookies cookies.json` skip password login
-- `--email` / `--password` override env vars
+- `--email` / `--password` (or `UL_EMAIL` / `UL_PASSWORD`)
+- `--captcha-key` 2Captcha/CapSolver key
+- `--headed` show Chrome
+- `--storage` Playwright session file
+- `--http` skip Chrome (will fail if the site requires reCAPTCHA)
+- `--cookies cookies.json` HTTP-path session cookies
 
 ## Import a zip from your Downloads folder
 
@@ -33,7 +39,7 @@ ulscrape import-zip ~/Downloads/ul_OPA2374AIDR.zip -o ./libraries
 ```
 
 This is the tested path used by Import-LIB-KiCad-Plugin and kicad-libsync.
-Use it when Ultra Librarian serves a captcha in `fetch`.
+Use it if you already have the vendor zip.
 
 ## Python API
 

@@ -65,18 +65,26 @@ ulscrape info \
   "https://app.ultralibrarian.com/details/1621AE5D-103F-11E9-AB3A-0A3560A4CCCC/Texas-Instruments/OPA2374AIDR"
 ```
 
-### 2. Download KiCad + STEP (login required)
+### 2. Download KiCad + STEP (account + reCAPTCHA)
+
+`fetch` drives a real Chrome session: login, select **KiCAD v6+** and **STEP**,
+complete Google reCAPTCHA, then download.
 
 ```bash
 export UL_EMAIL="you@example.com"
 export UL_PASSWORD="your-password"
+# Optional, used if clicking "I'm not a robot" is not enough:
+# export TWOCAPTCHA_API_KEY="..."
+
 ulscrape fetch \
   "https://app.ultralibrarian.com/details/1621AE5D-103F-11E9-AB3A-0A3560A4CCCC/Texas-Instruments/OPA2374AIDR" \
   -o libraries
 ```
 
-If the site shows a captcha, sign in with a browser, export cookies to
-`cookies.json`, and pass `--cookies cookies.json`.
+Copy `.env.example` to `.env` instead of exporting by hand. Never commit passwords.
+
+If the checkbox challenge needs a solver, set `TWOCAPTCHA_API_KEY` or `CAPSOLVER_API_KEY`.
+To watch the browser: `ulscrape fetch <url> --headed`.
 
 ### 3. Import a zip you already downloaded
 
@@ -99,7 +107,7 @@ Copy `libraries/` next to your `.kicad_pro`, or copy the generated
 | Command | Login | What it does |
 |---|---|---|
 | `ulscrape info <url>` | no | Scrape manufacturer, MPN, datasheet, CAD formats |
-| `ulscrape fetch <url>` | yes | Queue KiCad v6 + STEP, download zip, install library |
+| `ulscrape fetch <url>` | yes + reCAPTCHA | Chrome login, KiCad v6 + STEP, install library |
 | `ulscrape import-zip <zip>` | no | Extract symbol / footprint / 3D model from a local zip |
 
 `<url>` can be a details page, a CAD-portal `?partUuid=` link, or a bare UUID.

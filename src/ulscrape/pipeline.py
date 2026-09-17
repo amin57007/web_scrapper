@@ -26,12 +26,20 @@ def fetch_part(
     output = settings.output_dir
     output.mkdir(parents=True, exist_ok=True)
 
-    with build_client(settings) as client:
-        details = fetch_details(client, url)
+    if settings.use_browser:
+        from ulscrape.scraper.browser import download_with_browser
+
+        with build_client(settings) as client:
+            details = fetch_details(client, url)
         zip_path = output / "downloads" / f"{details.ref.slug}.zip"
-        queue_and_download(client, details, zip_path, settings, export_ids=export_ids)
-        if settings.cookies_path:
-            save_cookies(client, settings.cookies_path)
+        zip_path, details = download_with_browser(url, zip_path, settings, export_ids=export_ids)
+    else:
+        with build_client(settings) as client:
+            details = fetch_details(client, url)
+            zip_path = output / "downloads" / f"{details.ref.slug}.zip"
+            queue_and_download(client, details, zip_path, settings, export_ids=export_ids)
+            if settings.cookies_path:
+                save_cookies(client, settings.cookies_path)
 
     return import_zip(
         zip_path,

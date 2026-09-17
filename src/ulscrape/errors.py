@@ -23,5 +23,9 @@ class ExportError(UlscrapeError):
     """Queueing or downloading a CAD package failed."""
 
 
+class CaptchaError(UlscrapeError):
+    """Google reCAPTCHA on the export form could not be completed."""
+
+
 class ArchiveError(UlscrapeError):
     """The zip is not a usable Ultra Librarian / KiCad export."""
