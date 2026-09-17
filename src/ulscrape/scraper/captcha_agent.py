@@ -146,7 +146,7 @@ def _challenge_error(frame: Any) -> bool:
         text = frame.locator(".rc-imageselect-error-select-more, .rc-imageselect-incorrect-response")
         if text.count() == 0:
             return False
-        return True if text.first.is_visible() else False
+        return bool(text.first.is_visible())
     except Exception:
         return False
 

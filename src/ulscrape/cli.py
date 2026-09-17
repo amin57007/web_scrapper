@@ -10,9 +10,11 @@ from rich.console import Console
 from rich.table import Table
 
 from ulscrape import __version__
-from ulscrape.config import Settings
+from ulscrape.config import Settings, load_dotenv
 from ulscrape.errors import UlscrapeError
 from ulscrape.pipeline import fetch_part, import_zip, inspect_url
+
+load_dotenv()
 
 app = typer.Typer(
     add_completion=False,

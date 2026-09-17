@@ -28,7 +28,15 @@ def main() -> int:
         extra = " playwright=ok"
     except ImportError:
         extra = " playwright=missing (needed for ulscrape fetch captcha login)"
-    print(f"environment OK  python={sys.version.split()[0]}  ulscrape={__version__}{extra}")
+    from ulscrape.config import Settings
+
+    settings = Settings.from_env()
+    llm = "llm=set" if settings.llm_api_key else "llm=unset"
+    account = "ul_account=set" if settings.email else "ul_account=unset"
+    print(
+        f"environment OK  python={sys.version.split()[0]}  "
+        f"ulscrape={__version__}{extra}  {account}  {llm}"
+    )
     return 0
 
 

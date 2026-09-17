@@ -9,7 +9,8 @@ Public part metadata is scraped without a login. CAD file download uses
 also accepts a zip you already downloaded in a browser, which is the same
 workflow used by the tested KiCad plugins this project is based on.
 
-This is a local CLI. It does not call a language model at runtime.
+This is a local CLI. A vision LLM is used only when Google reCAPTCHA shows
+an image grid that the checkbox click did not clear.
 
 ## What you get
 

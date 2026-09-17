@@ -5,7 +5,7 @@ import json
 import httpx
 import pytest
 
-from ulscrape.scraper.captcha_agent import apply_decision
+from ulscrape.scraper.captcha_agent import _challenge_error, apply_decision
 from ulscrape.scraper.vision import (
     CaptchaDecision,
     complete_vision,
@@ -130,3 +130,34 @@ def test_apply_decision_clicks_and_verify() -> None:
     )
     assert clicks == [0, 2]
     assert verified["n"] == 1
+
+
+def test_challenge_error_visible() -> None:
+    class Node:
+        def count(self) -> int:
+            return 1
+
+        @property
+        def first(self) -> Node:
+            return self
+
+        def is_visible(self) -> bool:
+            return True
+
+    class Frame:
+        def locator(self, _selector: str) -> Node:
+            return Node()
+
+    assert _challenge_error(Frame()) is True
+
+
+def test_challenge_error_missing() -> None:
+    class Node:
+        def count(self) -> int:
+            return 0
+
+    class Frame:
+        def locator(self, _selector: str) -> Node:
+            return Node()
+
+    assert _challenge_error(Frame()) is False
