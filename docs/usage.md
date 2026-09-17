@@ -14,6 +14,8 @@ table (KiCad v5/v6, STEP, …). Use this to confirm the part before download.
 ```bash
 export UL_EMAIL="you@example.com"
 export UL_PASSWORD="..."
+# optional vision LLM for the reCAPTCHA image agent:
+# export OPENAI_API_KEY="..."
 # optional if the checkbox challenge needs a solver:
 # export TWOCAPTCHA_API_KEY="..."
 ulscrape fetch "<url>" -o ./libraries --lib-name UltraLibrarian
@@ -24,7 +26,8 @@ Flags:
 - `-o / --output` library root (default `libraries/`)
 - `--lib-name` KiCad nickname
 - `--email` / `--password` (or `UL_EMAIL` / `UL_PASSWORD`)
-- `--captcha-key` 2Captcha/CapSolver key
+- `--llm-key` / `--llm-provider` / `--llm-model` vision agent
+- `--captcha-key` 2Captcha/CapSolver fallback
 - `--headed` show Chrome
 - `--storage` Playwright session file
 - `--http` skip Chrome (will fail if the site requires reCAPTCHA)

@@ -83,8 +83,10 @@ ulscrape fetch \
 
 Copy `.env.example` to `.env` instead of exporting by hand. Never commit passwords.
 
-If the checkbox challenge needs a solver, set `TWOCAPTCHA_API_KEY` or `CAPSOLVER_API_KEY`.
-To watch the browser: `ulscrape fetch <url> --headed`.
+If the checkbox challenge needs a solver, set a **vision LLM** key (`OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or `OPENROUTER_API_KEY`). `fetch` then runs
+an agent loop: screenshot the grid → model picks tiles → click → verify → repeat.
+`TWOCAPTCHA_API_KEY` remains a fallback. To watch the browser: `ulscrape fetch <url> --headed`.
 
 ### 3. Import a zip you already downloaded
 

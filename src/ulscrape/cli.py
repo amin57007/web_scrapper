@@ -31,6 +31,9 @@ def _settings(
     use_browser: bool | None = None,
     headed: bool | None = None,
     storage: Path | None = None,
+    llm_key: str | None = None,
+    llm_provider: str | None = None,
+    llm_model: str | None = None,
 ) -> Settings:
     return Settings.from_env(
         output_dir=output,
@@ -41,6 +44,9 @@ def _settings(
         use_browser=use_browser,
         headed=headed,
         storage_state_path=storage,
+        llm_api_key=llm_key,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
     )
 
 
@@ -134,6 +140,22 @@ def fetch_cmd(
         Path | None,
         typer.Option("--storage", help="Playwright storage_state.json to reuse a signed-in session."),
     ] = None,
+    llm_key: Annotated[
+        str | None,
+        typer.Option(
+            "--llm-key",
+            envvar="OPENAI_API_KEY",
+            help="Vision LLM key (OpenAI, Anthropic, Gemini, or OpenRouter).",
+        ),
+    ] = None,
+    llm_provider: Annotated[
+        str | None,
+        typer.Option("--llm-provider", help="openai, anthropic, gemini, or openrouter."),
+    ] = None,
+    llm_model: Annotated[
+        str | None,
+        typer.Option("--llm-model", help="Vision model name (default gpt-4o / claude-sonnet / gemini-flash)."),
+    ] = None,
 ) -> None:
     """Log in, complete reCAPTCHA, download KiCad + STEP, and install the library."""
     settings = _settings(
@@ -145,6 +167,9 @@ def fetch_cmd(
         use_browser=browser,
         headed=True if headed else None,
         storage=storage,
+        llm_key=llm_key,
+        llm_provider=llm_provider,
+        llm_model=llm_model,
     )
     try:
         result = fetch_part(url, settings, lib_name=lib_name)

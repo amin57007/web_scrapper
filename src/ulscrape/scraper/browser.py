@@ -9,6 +9,7 @@ from typing import Any
 from ulscrape.config import Settings
 from ulscrape.errors import AuthError, CaptchaError, ExportError
 from ulscrape.models import PartDetails
+from ulscrape.scraper.captcha_agent import run_captcha_agent
 from ulscrape.scraper.details import parse_details_html
 from ulscrape.scraper.recaptcha import (
     INJECT_TOKEN_JS,
@@ -17,6 +18,7 @@ from ulscrape.scraper.recaptcha import (
     solve_recaptcha_v2,
 )
 from ulscrape.scraper.urls import details_url, parse_part_url
+from ulscrape.scraper.vision import discover_llm
 
 KICAD_V6_SELECTOR = "#KiCADv6"
 STEP_SELECTOR = "#MfrThreeDModel"
@@ -187,41 +189,54 @@ def _solve_export_captcha(page: Any, settings: Settings) -> None:
         return
 
     clicked = _click_recaptcha_checkbox(page)
-    if clicked and _wait_for_recaptcha_token(page, timeout_ms=25000):
+    if clicked and _wait_for_recaptcha_token(page, timeout_ms=8000):
         page.evaluate("() => { if (typeof captchaValid === 'function') captchaValid(); }")
         return
+
+    page.wait_for_timeout(1500)
+    if _wait_for_recaptcha_token(page, timeout_ms=3000):
+        page.evaluate("() => { if (typeof captchaValid === 'function') captchaValid(); }")
+        return
+
+    llm = discover_llm(
+        api_key=settings.llm_api_key,
+        provider=settings.llm_provider,
+        model=settings.llm_model,
+        base_url=settings.llm_base_url,
+    )
+    if llm is not None:
+        try:
+            if run_captcha_agent(page, settings, llm=llm):
+                page.evaluate("() => { if (typeof captchaValid === 'function') captchaValid(); }")
+                return
+        except CaptchaError:
+            if not settings.captcha_api_key:
+                raise
 
     sitekey = _page_sitekey(page)
     if not sitekey:
         html = page.content()
         sitekey = extract_sitekey(html)
+    if settings.captcha_api_key and sitekey:
+        token = solve_recaptcha_v2(
+            sitekey=sitekey,
+            page_url=page.url,
+            api_key=settings.captcha_api_key,
+            provider=settings.captcha_provider,
+            timeout_s=settings.poll_timeout_s,
+        )
+        page.evaluate(INJECT_TOKEN_JS, token)
+        return
+
     if not sitekey:
         raise CaptchaError(
             "export form shows Google reCAPTCHA but no sitekey was found"
         )
-    if not settings.captcha_api_key:
-        raise CaptchaError(
-            "Google reCAPTCHA on the download form was not solved by clicking. "
-            "Set TWOCAPTCHA_API_KEY or CAPSOLVER_API_KEY so the solver can complete "
-            "the challenge for your account, or set UL_HEADED=1 and retry."
-        )
-    token = solve_recaptcha_v2(
-        sitekey=sitekey,
-        page_url=page.url,
-        api_key=settings.captcha_api_key,
-        provider=settings.captcha_provider,
-        timeout_s=settings.poll_timeout_s,
+    raise CaptchaError(
+        "Google reCAPTCHA image challenge was not solved. Set a vision LLM key "
+        "(OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or OPENROUTER_API_KEY) "
+        "or TWOCAPTCHA_API_KEY / CAPSOLVER_API_KEY."
     )
-    page.evaluate(INJECT_TOKEN_JS, token)
-    if not _recaptcha_already_solved(page):
-        # Token is in the textarea even if grecaptcha.getResponse is empty.
-        page.evaluate(
-            """token => {
-                const el = document.querySelector("[name='g-recaptcha-response']");
-                return !!(el && el.value);
-            }""",
-            token,
-        )
 
 
 def _page_sitekey(page: Any) -> str | None:

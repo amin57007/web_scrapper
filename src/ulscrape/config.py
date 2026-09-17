@@ -32,6 +32,10 @@ class Settings(BaseModel):
     storage_state_path: Path | None = None
     captcha_api_key: str | None = None
     captcha_provider: str = "2captcha"
+    llm_api_key: str | None = None
+    llm_provider: str | None = None
+    llm_model: str | None = None
+    llm_base_url: str | None = None
     use_browser: bool = True
     headed: bool = False
     timeout_s: float = 30.0
@@ -62,6 +66,10 @@ class Settings(BaseModel):
             ),
             "use_browser": os.environ.get("UL_USE_BROWSER", "1") not in {"0", "false", "False"},
             "headed": os.environ.get("UL_HEADED", "0") in {"1", "true", "True"},
+            "llm_api_key": os.environ.get("UL_LLM_API_KEY") or None,
+            "llm_provider": os.environ.get("UL_LLM_PROVIDER") or None,
+            "llm_model": os.environ.get("UL_LLM_MODEL") or None,
+            "llm_base_url": os.environ.get("OPENAI_BASE_URL") or os.environ.get("UL_LLM_BASE_URL") or None,
         }
         cookies = os.environ.get("UL_COOKIES")
         if cookies:

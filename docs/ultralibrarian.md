@@ -75,8 +75,10 @@ Google reCAPTCHA v2 is on that form after login: callbacks `captchaValid` /
 4. Tick required consent boxes
 5. Complete reCAPTCHA:
    - click the "I'm not a robot" checkbox in the recaptcha iframe
-   - if that is not enough, send the sitekey to 2Captcha or CapSolver and
-     inject `g-recaptcha-response`, then call `captchaValid()`
+   - if an image grid appears, run the vision-LLM agent (screenshot → JSON
+     tile indexes → click → Verify → repeat up to 8 rounds)
+   - if that fails, send the sitekey to 2Captcha or CapSolver and inject
+     `g-recaptcha-response`, then call `captchaValid()`
 6. Click `#submit-export` and save the browser download as a zip
 
 `--http` uses the raw endpoints without a browser (no reCAPTCHA widget):
@@ -92,7 +94,10 @@ Google reCAPTCHA v2 is on that form after login: callbacks `captchaValid` /
 | `UL_EMAIL` | Account email |
 | `UL_PASSWORD` | Account password |
 | `UL_STORAGE` | Playwright `storage_state.json` to reuse a session |
-| `TWOCAPTCHA_API_KEY` | 2Captcha key for reCAPTCHA v2 |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` / `OPENROUTER_API_KEY` | Vision LLM for the image-challenge agent |
+| `UL_LLM_PROVIDER` | `openai`, `anthropic`, `gemini`, or `openrouter` |
+| `UL_LLM_MODEL` | Override model name |
+| `TWOCAPTCHA_API_KEY` | 2Captcha key (fallback) |
 | `CAPSOLVER_API_KEY` | CapSolver key (used if 2Captcha is unset) |
 | `UL_HEADED` | `1` to show the Chrome window |
 | `UL_USE_BROWSER` | `0` to force the HTTP-only path |

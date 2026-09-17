@@ -44,7 +44,7 @@ Ultra Librarian URL
 
 - **No KiCad install required to run tests.** Fixtures are synthetic Ultra Librarian zips.
 - **Login is optional for metadata.** `info` only hits the public details page.
-- **CAD download uses the user's account.** Credentials stay in env vars / a cookie file; they are never logged. reCAPTCHA is completed in Chrome (checkbox click, or 2Captcha/CapSolver if you provide a key).
+- **CAD download uses the user's account.** Credentials stay in env vars / a cookie file; they are never logged. reCAPTCHA is completed in Chrome (checkbox click, then an agentic vision-LLM loop on the image grid, then 2Captcha/CapSolver if you provide those keys).
 - **Zip members are never extracted with `..` or absolute paths.**
 - **Vendor zip layouts are identified, not assumed.** See [kicad-libraries.md](kicad-libraries.md).
 
