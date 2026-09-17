@@ -14,8 +14,6 @@ from ulscrape.config import Settings, load_dotenv
 from ulscrape.errors import UlscrapeError
 from ulscrape.pipeline import fetch_part, import_zip, inspect_url
 
-load_dotenv()
-
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
@@ -37,6 +35,7 @@ def _settings(
     llm_provider: str | None = None,
     llm_model: str | None = None,
 ) -> Settings:
+    load_dotenv()
     return Settings.from_env(
         output_dir=output,
         cookies_path=cookies,
@@ -227,6 +226,7 @@ def _print_result(result: object) -> None:
 
 
 def main() -> None:
+    load_dotenv()
     app()
 
 

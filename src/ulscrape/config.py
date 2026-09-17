@@ -22,8 +22,11 @@ def load_dotenv(path: Path | None = None) -> Path | None:
     """Load KEY=VALUE pairs from a .env file without overriding the process env.
 
     Looks at ``path``, then ``./.env``, then the repository root next to this package.
-    Returns the file that was read, or None.
+    Returns the file that was read, or None. Implicit discovery is skipped when
+    ``UL_SKIP_DOTENV=1`` (used by the test suite so a developer .env cannot leak).
     """
+    if path is None and os.environ.get("UL_SKIP_DOTENV") in {"1", "true", "True"}:
+        return None
     candidates: list[Path] = []
     if path is not None:
         candidates.append(path)

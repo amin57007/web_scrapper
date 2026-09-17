@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
 
 from tests.helpers import write_ul_zip
+
+# Keep a developer .env (OpenAI key, UL login) out of unit tests.
+os.environ["UL_SKIP_DOTENV"] = "1"
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

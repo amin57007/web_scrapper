@@ -146,6 +146,32 @@ def complete_vision(cfg: LlmConfig, prompt: str, png: bytes) -> CaptchaDecision:
     return parse_decision(text)
 
 
+def _openai_message_text(payload: object) -> str:
+    if not isinstance(payload, dict):
+        raise CaptchaError("OpenAI-compatible vision response missing content")
+    try:
+        message = payload["choices"][0]["message"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise CaptchaError("OpenAI-compatible vision response missing content") from exc
+    if not isinstance(message, dict):
+        raise CaptchaError("OpenAI-compatible vision response missing content")
+    content = message.get("content")
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and item.get("text"):
+                parts.append(str(item["text"]))
+        content = "".join(parts)
+    if isinstance(content, str) and content.strip() and content.strip() != "None":
+        return content
+    refusal = message.get("refusal")
+    if refusal:
+        raise CaptchaError(f"vision model refused: {refusal}")
+    raise CaptchaError("OpenAI-compatible vision response missing content")
+
+
 def _openai_vision(cfg: LlmConfig, prompt: str, image_b64: str) -> str:
     root = (cfg.base_url or "https://api.openai.com/v1").rstrip("/")
     headers = {
@@ -155,33 +181,33 @@ def _openai_vision(cfg: LlmConfig, prompt: str, image_b64: str) -> str:
     if cfg.provider == "openrouter":
         headers["HTTP-Referer"] = "https://github.com/amin57007/web_scrapper"
         headers["X-Title"] = "ulscrape"
-    with httpx.Client(timeout=60.0) as client:
-        response = client.post(
-            f"{root}/chat/completions",
-            headers=headers,
-            json={
-                "model": cfg.model,
-                "temperature": 0,
-                "messages": [
+    body: dict[str, object] = {
+        "model": cfg.model,
+        "temperature": 0,
+        "max_tokens": 512,
+        "response_format": {"type": "json_object"},
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
                     {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": f"data:image/png;base64,{image_b64}"},
-                            },
-                        ],
-                    }
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{image_b64}"},
+                    },
                 ],
-            },
-        )
+            }
+        ],
+    }
+    with httpx.Client(timeout=60.0) as client:
+        response = client.post(f"{root}/chat/completions", headers=headers, json=body)
+        if response.status_code == 400 and "max_tokens" in response.text:
+            body.pop("max_tokens", None)
+            body["max_completion_tokens"] = 512
+            response = client.post(f"{root}/chat/completions", headers=headers, json=body)
         response.raise_for_status()
         payload = response.json()
-    try:
-        return str(payload["choices"][0]["message"]["content"])
-    except (KeyError, IndexError, TypeError) as exc:
-        raise CaptchaError("OpenAI-compatible vision response missing content") from exc
+    return _openai_message_text(payload)
 
 
 def _anthropic_vision(cfg: LlmConfig, prompt: str, image_b64: str) -> str:
