@@ -23,8 +23,11 @@ QUEUE_FAILED = {3, 4}
 def fetch_details(client: httpx.Client, url: str) -> PartDetails:
     """GET a public details page and parse it."""
     ref = parse_part_url(url, base_url=str(client.base_url))
-    page = client.get(details_url(ref, base_url=str(client.base_url)))
-    page.raise_for_status()
+    try:
+        page = client.get(details_url(ref, base_url=str(client.base_url)))
+        page.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise ExportError(f"could not load Ultra Librarian details page: {exc}") from exc
     details = parse_details_html(page.text, page_url=str(page.url))
     if not details.ref.url:
         details.ref.url = str(page.url)

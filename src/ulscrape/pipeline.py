@@ -29,10 +29,14 @@ def fetch_part(
     if settings.use_browser:
         from ulscrape.scraper.browser import download_with_browser
 
-        with build_client(settings) as client:
-            details = fetch_details(client, url)
-        zip_path = output / "downloads" / f"{details.ref.slug}.zip"
-        zip_path, details = download_with_browser(url, zip_path, settings, export_ids=export_ids)
+        # Name the zip from the URL so Chrome is the only TLS client.
+        # httpx against app.ultralibrarian.com can fail (SSL EOF) while
+        # Playwright/Chrome still loads the same page.
+        ref = parse_part_url(url, base_url=settings.base_url)
+        zip_path = output / "downloads" / f"{ref.slug}.zip"
+        zip_path, details = download_with_browser(
+            url, zip_path, settings, export_ids=export_ids
+        )
     else:
         with build_client(settings) as client:
             details = fetch_details(client, url)
