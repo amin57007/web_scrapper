@@ -1,0 +1,10 @@
+# Example Ultra Librarian part URLs
+
+# Dual RRIO op-amp, SOIC-8 (used in tests)
+https://app.ultralibrarian.com/details/1621AE5D-103F-11E9-AB3A-0A3560A4CCCC/Texas-Instruments/OPA2374AIDR
+
+# Bare UUID form also works:
+# 1621ae5d-103f-11e9-ab3a-0a3560a4cccc
+
+# CAD-portal query form also works:
+# https://cad.ultralibrarian.com/orcad/Home?partUuid=1621ae5d-103f-11e9-ab3a-0a3560a4cccc&mfr=Texas-Instruments&mpn=OPA2374AIDR

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* Match Bootstrap custom-control + collapse: native checkbox is not visible. */
+        .collapse:not(.show) { display: none; }
+        .custom-control-input {
+            position: absolute;
+            z-index: -1;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+        }
+    </style>
+</head>
+<body>
+    <button id="export-selection-btn" type="button">Download Now</button>
+    <div id="export-selection-parent">
+        <form id="export-selection-form">
+            <div class="card export-group">
+                <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#ef-kicad">KiCAD</a>
+                <div id="ef-kicad" class="collapse">
+                    <input id="KiCAD" name="exports" type="checkbox" value="24" class="custom-control-input export-option">
+                    <label for="KiCAD">KiCAD v5</label>
+                    <input id="KiCADv6" name="exports" type="checkbox" value="42" class="custom-control-input export-option">
+                    <label for="KiCADv6">KiCAD v6+</label>
+                </div>
+            </div>
+            <div class="card export-group">
+                <a class="accordion-toggle collapsed" data-toggle="collapse" data-target="#ef-3d">3D CAD Model</a>
+                <div id="ef-3d" class="collapse">
+                    <input id="MfrThreeDModel" name="exports" type="checkbox" value="37" class="custom-control-input export-option">
+                    <label for="MfrThreeDModel">STEP</label>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
