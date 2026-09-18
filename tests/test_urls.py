@@ -35,6 +35,11 @@ def test_parse_rejects_unrelated_url() -> None:
         parse_part_url("https://example.com/parts/opa2374")
 
 
+def test_parse_rejects_empty() -> None:
+    with pytest.raises(UrlParseError, match="empty"):
+        parse_part_url("   ")
+
+
 def test_details_url_roundtrip() -> None:
     ref = parse_part_url("1621ae5d-103f-11e9-ab3a-0a3560a4cccc")
     assert details_url(ref).endswith("/details/1621ae5d-103f-11e9-ab3a-0a3560a4cccc")

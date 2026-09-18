@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import zipfile
 from pathlib import Path
 
@@ -74,3 +75,112 @@ def write_ul_zip(path: Path, *, layout: str = "kicadv6") -> Path:
         else:
             raise ValueError(layout)
     return path
+
+
+def logged_in_html(html: str) -> str:
+    """Flip the public details gate so parse_details_html sees a signed-in page."""
+    return html.replace("login-return-url", "logged-in").replace(
+        "Login to Download", "Signed in"
+    )
+
+
+def remove_export_checkbox(html: str, html_id: str) -> str:
+    """Drop one CAD checkbox and its label from a details-page fixture."""
+    html = re.sub(rf'<input[^>]*\sid="{re.escape(html_id)}"[^>]*>\s*', "", html)
+    return re.sub(
+        rf'<label for="{re.escape(html_id)}">.*?</label>\s*',
+        "",
+        html,
+        flags=re.DOTALL,
+    )
+
+
+_EXPORT_PANEL_CSS = """
+.collapse:not(.show) { display: none; }
+.custom-control-input {
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+#submit-export.hidden { display: none; }
+"""
+
+
+def export_panel_html(
+    *,
+    collapsed: bool = True,
+    kicad_v6: bool = True,
+    kicad_v5: bool = True,
+    step_id: str = "MfrThreeDModel",
+    step_value: int = 37,
+    extra_step: str = "",
+    consents: bool = False,
+    submit: bool = False,
+    submit_hidden: bool = False,
+) -> str:
+    """Minimal Ultra Librarian export panel matching Bootstrap collapse + custom-control."""
+    collapse_class = "collapse" if collapsed else "collapse show"
+    toggle_class = "accordion-toggle collapsed" if collapsed else "accordion-toggle"
+    kicad_v5_input = ""
+    if kicad_v5:
+        kicad_v5_input = (
+            '<input id="KiCAD" name="exports" type="checkbox" value="24" '
+            'class="custom-control-input export-option">'
+            "<label for=\"KiCAD\">KiCAD v5</label>"
+        )
+    kicad_v6_input = ""
+    if kicad_v6:
+        kicad_v6_input = (
+            '<input id="KiCADv6" name="exports" type="checkbox" value="42" '
+            'class="custom-control-input export-option">'
+            "<label for=\"KiCADv6\">KiCAD v6+</label>"
+        )
+    step_input = (
+        f'<input id="{step_id}" name="exports" type="checkbox" value="{step_value}" '
+        f'class="custom-control-input export-option">'
+        f'<label for="{step_id}">STEP</label>'
+    )
+    consents_html = ""
+    if consents:
+        consents_html = """
+            <input type="checkbox" class="consentRequest required custom-control-input" id="consent1">
+            <label for="consent1">Required manufacturer consent</label>
+            <input type="checkbox" class="mfr-export-consent-item required custom-control-input" id="consent2">
+            <label for="consent2">Required export consent</label>
+        """
+    submit_html = ""
+    if submit:
+        hidden_class = " hidden" if submit_hidden else ""
+        submit_html = (
+            f'<button id="submit-export" type="button" class="btn{hidden_class}">'
+            "Download Selected</button>"
+        )
+    return f"""<!DOCTYPE html>
+<html>
+<head><style>{_EXPORT_PANEL_CSS}</style></head>
+<body>
+    <button id="export-selection-btn" type="button">Download Now</button>
+    <div id="export-selection-parent">
+        <form id="export-selection-form">
+            <div class="card export-group">
+                <a class="{toggle_class}" data-toggle="collapse" data-target="#ef-kicad">KiCAD</a>
+                <div id="ef-kicad" class="{collapse_class}">
+                    {kicad_v5_input}
+                    {kicad_v6_input}
+                </div>
+            </div>
+            <div class="card export-group">
+                <a class="{toggle_class}" data-toggle="collapse" data-target="#ef-3d">3D CAD Model</a>
+                <div id="ef-3d" class="{collapse_class}">
+                    {step_input}
+                    {extra_step}
+                </div>
+            </div>
+            {consents_html}
+            {submit_html}
+        </form>
+    </div>
+</body>
+</html>"""

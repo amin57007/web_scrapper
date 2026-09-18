@@ -51,15 +51,25 @@ def _settings(
     )
 
 
-@app.callback()
-def _version_flag(
-    version: Annotated[
-        bool, typer.Option("--version", help="Show version and exit.")
-    ] = False,
-) -> None:
-    if version:
+def _print_version(value: bool) -> None:
+    if value:
         console.print(__version__)
         raise typer.Exit()
+
+
+@app.callback()
+def _root(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            callback=_print_version,
+            is_eager=True,
+            help="Show version and exit.",
+        ),
+    ] = False,
+) -> None:
+    """Download Ultra Librarian IC CAD files and install them as KiCad libraries."""
 
 
 @app.command("info")

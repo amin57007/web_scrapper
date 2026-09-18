@@ -14,5 +14,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt && pip install -e .
+      - run: python -m playwright install --with-deps chromium
       - run: ruff check src tests scripts
       - run: python -m pytest -m "not network" -q
