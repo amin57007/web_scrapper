@@ -33,6 +33,39 @@ DOWNLOAD_BTN = "#export-selection-btn"
 SUBMIT_EXPORT = "#submit-export"
 LOGIN_GATE = "a.login-return-url"
 
+# Bootstrap custom checkboxes sit in collapsed .collapse panels and the native
+# <input> is opacity:0. Playwright's locator.check() then fails with
+# "Element is not visible" even when force=True.
+_EXPAND_EXPORT_GROUPS_JS = """() => {
+    document.querySelectorAll(
+        "#export-selection-parent .collapse, #export-selection-form .collapse, .export-group .collapse"
+    ).forEach((el) => {
+        el.classList.add("show");
+        el.style.display = "block";
+        el.style.height = "auto";
+        el.style.visibility = "visible";
+    });
+    document.querySelectorAll(".accordion-toggle.collapsed").forEach((el) => {
+        el.classList.remove("collapsed");
+        el.setAttribute("aria-expanded", "true");
+    });
+}"""
+
+_CHECK_HIDDEN_JS = """(el) => {
+    if (!el) return false;
+    const collapse = el.closest(".collapse");
+    if (collapse) {
+        collapse.classList.add("show");
+        collapse.style.display = "block";
+        collapse.style.height = "auto";
+        collapse.style.visibility = "visible";
+    }
+    el.checked = true;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    return !!el.checked;
+}"""
+
 
 def download_with_browser(
     url: str,
@@ -42,6 +75,7 @@ def download_with_browser(
 ) -> tuple[Path, PartDetails]:
     """Log in with a real Chrome session, pass reCAPTCHA, download KiCad+STEP."""
     try:
+        from playwright.sync_api import Error as PlaywrightError
         from playwright.sync_api import TimeoutError as PlaywrightTimeout
         from playwright.sync_api import sync_playwright
     except ImportError as exc:
@@ -94,6 +128,8 @@ def download_with_browser(
             return zip_path, details
         except PlaywrightTimeout as exc:
             raise ExportError(f"timed out driving the Ultra Librarian UI: {exc}") from exc
+        except PlaywrightError as exc:
+            raise ExportError(f"Ultra Librarian UI error: {exc}") from exc
         finally:
             context.close()
             browser.close()
@@ -146,8 +182,21 @@ def _open_export_panel(page: Any) -> None:
     btn.wait_for(state="visible")
     btn.click()
     page.wait_for_selector("#export-selection-parent")
-    # Bootstrap collapse: wait until the panel is actually shown.
+    # Bootstrap collapse: wait until the panel is actually shown, then open
+    # the CAD-format accordions that keep KiCad/STEP checkboxes display:none.
     page.wait_for_timeout(500)
+    _expand_export_groups(page)
+
+
+def _expand_export_groups(page: Any) -> None:
+    page.evaluate(_EXPAND_EXPORT_GROUPS_JS)
+
+
+def _check_hidden_input(locator: Any) -> bool:
+    """Tick a Bootstrap/UL checkbox that may be opacity:0 or inside .collapse."""
+    if locator.count() == 0:
+        return False
+    return bool(locator.first.evaluate(_CHECK_HIDDEN_JS))
 
 
 def _select_kicad_and_step(
@@ -155,6 +204,7 @@ def _select_kicad_and_step(
     details: PartDetails,
     export_ids: Sequence[int] | None,
 ) -> None:
+    _expand_export_groups(page)
     wanted = set(export_ids or [])
     if not wanted:
         kicad = details.kicad_v6() or details.kicad_v5()
@@ -167,26 +217,22 @@ def _select_kicad_and_step(
             wanted.update({KICAD_V6_EXPORT_ID, STEP_EXPORT_ID, STEP_EXPORT_ID_GENERIC})
 
     for export_id in wanted:
-        box = page.locator(f'input.export-option[name="exports"][value="{export_id}"]')
-        if box.count():
-            box.check(force=True)
+        _check_hidden_input(
+            page.locator(f'input.export-option[name="exports"][value="{export_id}"]')
+        )
 
     # Prefer the documented KiCad v6 + STEP widgets even if details parsing lagged.
-    if page.locator(KICAD_V6_SELECTOR).count():
-        page.locator(KICAD_V6_SELECTOR).check(force=True)
-    elif page.locator("#KiCAD").count():
-        page.locator("#KiCAD").check(force=True)
+    if not _check_hidden_input(page.locator(KICAD_V6_SELECTOR)):
+        _check_hidden_input(page.locator("#KiCAD"))
     for selector in STEP_SELECTORS:
-        loc = page.locator(selector)
-        if loc.count():
-            loc.check(force=True)
+        _check_hidden_input(page.locator(selector))
 
 
 def _accept_required_consents(page: Any) -> None:
     boxes = page.locator(".consentRequest.required, .mfr-export-consent-item.required")
     count = boxes.count()
     for i in range(count):
-        boxes.nth(i).check(force=True)
+        _check_hidden_input(boxes.nth(i))
 
 
 def _solve_export_captcha(page: Any, settings: Settings) -> None:

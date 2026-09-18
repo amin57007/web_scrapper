@@ -74,7 +74,9 @@ Google reCAPTCHA v2 is on that form after login: callbacks `captchaValid` /
 
 1. Open the part URL and click **Download Now**
 2. Sign in with `UL_EMAIL` / `UL_PASSWORD` (IdentityServer + OIDC form_post)
-3. Check KiCad v6+ (`#KiCADv6`) and STEP (`#ThreeDModel` or `#MfrThreeDModel`)
+3. Expand CAD-format accordions and check KiCad v6+ (`#KiCADv6`) plus STEP
+   (`#ThreeDModel` or `#MfrThreeDModel`), including when those checkboxes are
+   inside a collapsed Bootstrap panel
 4. Tick required consent boxes
 5. Complete reCAPTCHA:
    - click the "I'm not a robot" checkbox in the recaptcha iframe
