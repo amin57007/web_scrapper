@@ -129,7 +129,7 @@ rather than guessing:
 
 The download client talks to the same endpoints the Ultra Librarian web
 app uses (`/Export/QueueExport`, `/Export/CheckQueue`, `/Export/Download`)
-with KiCad v6+ export id `42` and STEP export id `37`.
+with KiCad v6+ export id `42` and the part's STEP id (`37` or `21`).
 
 ## Docs
 

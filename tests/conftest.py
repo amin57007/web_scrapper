@@ -19,5 +19,10 @@ def details_html() -> str:
 
 
 @pytest.fixture
+def adrf_details_html() -> str:
+    return (FIXTURES / "details_adrf5051.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
 def ul_zip(tmp_path: Path) -> Path:
     return write_ul_zip(tmp_path / "ul_OPA2374AIDR.zip")

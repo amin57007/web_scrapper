@@ -23,7 +23,11 @@ class CadFormat(BaseModel):
 
     @property
     def is_step(self) -> bool:
-        return self.html_id == "MfrThreeDModel" or self.label.strip().upper() == "STEP"
+        html_id = self.html_id.lower()
+        if html_id in {"mfrthreedmodel", "threedmodel"}:
+            return True
+        label = self.label.strip().upper()
+        return label == "STEP" or label.startswith("STEP ")
 
 
 class PartRef(BaseModel):

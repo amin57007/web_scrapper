@@ -1,7 +1,8 @@
 # Ultra Librarian scrape and download
 
-Observed from the live site `app.ultralibrarian.com` (anonymous details page
-for Texas Instruments OPA2374AIDR) and from `/js/handler.min.js`.
+Observed from the live site `app.ultralibrarian.com` (anonymous details pages
+for Texas Instruments OPA2374AIDR and Analog Devices ADRF5051BCCZN) and from
+`/js/handler.min.js`.
 
 ## Part URL forms
 
@@ -36,17 +37,19 @@ https://app.ultralibrarian.com/details/1621AE5D-103F-11E9-AB3A-0A3560A4CCCC/Texa
 
 Live export checkbox values used by this tool:
 
-| `id` | `value` | Label |
-|---|---|---|
-| `KiCAD` | **24** | KiCAD v5 |
-| `KiCADv6` | **42** | KiCAD v6+ |
-| `MfrThreeDModel` | **37** | STEP |
-| `IGES` | 45 | IGES v5.3 |
-| `STL` | 57 | STL |
+| `id` | `value` | Label | Seen on |
+|---|---|---|---|
+| `KiCAD` | **24** | KiCAD v5 | both |
+| `KiCADv6` | **42** | KiCAD v6+ | both |
+| `MfrThreeDModel` | **37** | STEP | TI OPA2374AIDR |
+| `ThreeDModel` | **21** | STEP | ADI ADRF5051BCCZN |
+| `IGES` | 45 | IGES v5.3 | both |
+| `STL` | 57 | STL | both |
 
 KiCad v6+ checkboxes advertise symbol + footprint. STEP is a separate 3D
-export. `ulscrape fetch` requests **42 and 37** so the zip contains both
-the KiCad library and a STEP model.
+export whose HTML id and numeric value are part-dependent. `ulscrape fetch`
+parses the details page and requests KiCad v6+ plus the STEP checkbox that
+is actually present (42+37 or 42+21).
 
 Anonymous pages show `Login to Download`. That is why `info` works without
 credentials and `fetch` does not.
@@ -71,7 +74,7 @@ Google reCAPTCHA v2 is on that form after login: callbacks `captchaValid` /
 
 1. Open the part URL and click **Download Now**
 2. Sign in with `UL_EMAIL` / `UL_PASSWORD` (IdentityServer + OIDC form_post)
-3. Check KiCad v6+ (`#KiCADv6`) and STEP (`#MfrThreeDModel`)
+3. Check KiCad v6+ (`#KiCADv6`) and STEP (`#ThreeDModel` or `#MfrThreeDModel`)
 4. Tick required consent boxes
 5. Complete reCAPTCHA:
    - click the "I'm not a robot" checkbox in the recaptcha iframe
@@ -83,7 +86,8 @@ Google reCAPTCHA v2 is on that form after login: callbacks `captchaValid` /
 
 `--http` uses the raw endpoints without a browser (no reCAPTCHA widget):
 
-1. `POST /Export/QueueExport` with `PartUniqueId`, `exports=42`, `exports=37`
+1. `POST /Export/QueueExport` with `PartUniqueId`, `exports=42`, and the
+   parsed STEP id (`37` or `21`)
 2. Poll `GET /Export/CheckQueue?queueToken=...` (`state == 2` ready)
 3. `GET /Export/Download?queueToken=...`
 

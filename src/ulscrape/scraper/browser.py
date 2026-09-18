@@ -6,7 +6,12 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-from ulscrape.config import Settings
+from ulscrape.config import (
+    KICAD_V6_EXPORT_ID,
+    STEP_EXPORT_ID,
+    STEP_EXPORT_ID_GENERIC,
+    Settings,
+)
 from ulscrape.errors import AuthError, CaptchaError, ExportError
 from ulscrape.models import PartDetails
 from ulscrape.scraper.captcha_agent import run_captcha_agent
@@ -21,7 +26,9 @@ from ulscrape.scraper.urls import details_url, parse_part_url
 from ulscrape.scraper.vision import discover_llm
 
 KICAD_V6_SELECTOR = "#KiCADv6"
-STEP_SELECTOR = "#MfrThreeDModel"
+# Manufacturer STEP checkbox: Analog Devices uses #ThreeDModel (id 21);
+# TI and others often use #MfrThreeDModel (id 37).
+STEP_SELECTORS = ("#ThreeDModel", "#MfrThreeDModel")
 DOWNLOAD_BTN = "#export-selection-btn"
 SUBMIT_EXPORT = "#submit-export"
 LOGIN_GATE = "a.login-return-url"
@@ -157,7 +164,7 @@ def _select_kicad_and_step(
         if step:
             wanted.add(step.export_id)
         if not wanted:
-            wanted.update({42, 37})
+            wanted.update({KICAD_V6_EXPORT_ID, STEP_EXPORT_ID, STEP_EXPORT_ID_GENERIC})
 
     for export_id in wanted:
         box = page.locator(f'input.export-option[name="exports"][value="{export_id}"]')
@@ -169,8 +176,10 @@ def _select_kicad_and_step(
         page.locator(KICAD_V6_SELECTOR).check(force=True)
     elif page.locator("#KiCAD").count():
         page.locator("#KiCAD").check(force=True)
-    if page.locator(STEP_SELECTOR).count():
-        page.locator(STEP_SELECTOR).check(force=True)
+    for selector in STEP_SELECTORS:
+        loc = page.locator(selector)
+        if loc.count():
+            loc.check(force=True)
 
 
 def _accept_required_consents(page: Any) -> None:

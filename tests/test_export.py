@@ -55,6 +55,47 @@ def test_fetch_details_and_download(details_html: str, tmp_path: Path) -> None:
     assert any("GET /Export/Download" in c for c in calls)
 
 
+def test_adrf5051_queues_step_id_21(adrf_details_html: str, tmp_path: Path) -> None:
+    zip_bytes = write_ul_zip(tmp_path / "src.zip").read_bytes()
+    logged_in_html = (
+        adrf_details_html.replace("login-return-url", "logged-in").replace(
+            "Login to Download", "Signed in"
+        )
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.startswith("/details/"):
+            return httpx.Response(200, text=logged_in_html)
+        if path == "/Export/QueueExport":
+            body = request.content.decode("utf-8")
+            assert "exports=42" in body
+            assert "exports=21" in body
+            assert "exports=37" not in body
+            assert "PartUniqueId=f4e05b10-37aa-11ef-bf12-024899f9dfe1" in body
+            return httpx.Response(200, json={"success": True, "encoded_token": "tok-adrf"})
+        if path == "/Export/CheckQueue":
+            return httpx.Response(200, json={"state": 2})
+        if path == "/Export/Download":
+            return httpx.Response(
+                200,
+                content=zip_bytes,
+                headers={"content-type": "application/zip"},
+            )
+        return httpx.Response(404, text="missing " + path)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport, base_url="https://app.ultralibrarian.com")
+    details = fetch_details(
+        client,
+        "https://app.ultralibrarian.com/details/f4e05b10-37aa-11ef-bf12-024899f9dfe1/Analog-Devices-Inc/ADRF5051BCCZN",
+    )
+    dest = tmp_path / "adrf.zip"
+    saved = queue_and_download(client, details, dest, Settings(output_dir=tmp_path))
+    assert saved == dest
+    assert dest.read_bytes() == zip_bytes
+
+
 def test_cookie_roundtrip(tmp_path: Path) -> None:
     from ulscrape.scraper.session import build_client, load_cookies, save_cookies
 

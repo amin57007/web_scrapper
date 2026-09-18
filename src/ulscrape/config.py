@@ -67,10 +67,12 @@ DEFAULT_USER_AGENT = (
     "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 )
 
-# Live export checkbox values from app.ultralibrarian.com (KiCAD v6+ and STEP).
+# Live export checkbox values from app.ultralibrarian.com.
+# KiCAD v6+ is 42. STEP is part-dependent: 37 (#MfrThreeDModel) or 21 (#ThreeDModel).
 KICAD_V6_EXPORT_ID = 42
 KICAD_V5_EXPORT_ID = 24
 STEP_EXPORT_ID = 37
+STEP_EXPORT_ID_GENERIC = 21
 
 DEFAULT_EXPORT_IDS = (KICAD_V6_EXPORT_ID, STEP_EXPORT_ID)
 
